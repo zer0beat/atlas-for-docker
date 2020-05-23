@@ -18,12 +18,14 @@ FROM debian:stretch
 ENV ATLAS_HOME      /opt/atlas
 
 COPY --from=builder ${ATLAS_HOME} ${ATLAS_HOME}
+COPY scripts /opt/scripts
 
 RUN apt-get update && \
-    apt-get install -y python openjdk-8-jdk procps lsof && \
+    apt-get install -y python openjdk-8-jdk procps lsof curl && \
     rm -rf /var/lib/apt/lists/* && \
     useradd -ms /bin/bash -d ${ATLAS_HOME} atlas && \
-    chown -R atlas:atlas ${ATLAS_HOME}
+    chown -R atlas:atlas ${ATLAS_HOME} && \
+    mkdir -p /docker-init-scripts.d
 
 COPY atlas /usr/local/bin/atlas
 WORKDIR ${ATLAS_HOME}
@@ -31,4 +33,5 @@ WORKDIR ${ATLAS_HOME}
 USER atlas:atlas
 EXPOSE 21000
 
+ENTRYPOINT [ "/opt/scripts/docker-entrypoint.sh" ]
 CMD ["atlas"]

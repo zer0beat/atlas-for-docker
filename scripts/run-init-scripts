@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+#
+# Source any '.sh' scripts in /docker-init-scripts.d.
+# This script is sourced by the entrypoint, so that
+# you can run eg:
+#
+#   mkdir init; echo "echo hi" > init/hi.sh
+#   docker run -v $PWD/init:/docker-init-scripts.d/ atlas
+#
+# and have your script execute before Atlas starts.
+#
+# Note: scripts can modify the environment, which will affect
+# subsequent scripts and ultimately Atlas. That allows you to set
+# environment variables from your scripts (though you usually just
+# use "docker run -e"). If this is undesirable in your use-case,
+# have your scripts execute a sub-shell.
+
+set -e
+
+# execute files in /docker-init-scripts.d before starting solr
+while read -r f; do
+    case "$f" in
+        *.sh)     echo "$0: running $f"; . "$f" ;;
+        *)        echo "$0: ignoring $f" ;;
+    esac
+    echo
+done < <(find /docker-init-scripts.d/ -mindepth 1 -type f | sort -n)
