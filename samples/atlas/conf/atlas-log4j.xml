@@ -95,12 +95,12 @@
 
     <logger name="org.apache.atlas" additivity="false">
         <level value="info"/>
-        <appender-ref ref="FILE"/>
+        <appender-ref ref="console"/>
     </logger>
 
     <logger name="org.janusgraph" additivity="false">
         <level value="warn"/>
-        <appender-ref ref="FILE"/>
+        <appender-ref ref="console"/>
     </logger>
 
     <logger name="org.springframework" additivity="false">
