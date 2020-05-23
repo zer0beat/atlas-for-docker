@@ -7,6 +7,7 @@ services:
         - 21000:21000
       volumes:
         - ./atlas/scripts/:/docker-init-scripts.d/
+        - ./atlas/conf/:/opt/atlas/conf
       depends_on:
         - solr
         - kafka
@@ -21,6 +22,7 @@ services:
         - ZK_HOST=zookeeper:2181/solr
       volumes:
         - ./solr/scripts/:/docker-entrypoint-initdb.d/
+        - ./solr/configsets/atlas:/opt/solr/server/solr/configsets/atlas:ro
 
     zookeeper:
       image: zookeeper:3.4.14
