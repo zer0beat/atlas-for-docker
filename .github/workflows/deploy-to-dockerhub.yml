@@ -2,6 +2,20 @@ name: Build and Deploy to Dockerhub
 on: [push]
 
 jobs:
+  # generate-jobs:
+  #   name: Generate Jobs
+  #   runs-on: ubuntu-latest
+  #   outputs:
+  #     strategy: ${{ steps.generate-jobs.outputs.strategy }}
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - id: generate-jobs
+  #       name: Generate Jobs
+  #       run: |
+  #         strategy="$(cat strategy.yaml)"
+  #         jq . <<<"$strategy" # sanity check / debugging aid
+  #         echo "::set-output name=strategy::$strategy"
+
   build:
     name: 2.0.0-stretch
     runs-on: ubuntu-latest
@@ -31,6 +45,7 @@ jobs:
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
+          dockerfile: 2.0/stretch/Dockerfile
           tags: 2.0.0,2.0.0-stretch,latest
           repository: z0beat/atlas
           push: ${{ github.ref == 'refs/heads/master'}}
