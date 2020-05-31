@@ -12,7 +12,7 @@ jobs:
       - id: generate-jobs
         name: Generate Jobs
         run: |
-          strategy="$(cat strategy.json | tr -d '\n')"
+          strategy="$(cat .github/strategy.json | tr -d '\n')"
           jq . <<<"$strategy" # sanity check / debugging aid
           echo "::set-output name=strategy::$strategy"
 
