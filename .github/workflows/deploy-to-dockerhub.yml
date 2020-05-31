@@ -3,16 +3,34 @@ on: [push]
 
 jobs:
   build:
-    name: Build and Deploy
+    name: 2.0.0-stretch
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - uses: docker/build-push-action@v1
+      - name: Prepare environment
+        run: git clone https://github.com/docker-library/official-images.git ./official-images
+
+      - name: Pull dependencies
+        run: grep FROM 2.0/stretch/Dockerfile | awk 'toupper($1) == "FROM" { print $2 }' | xargs -I {} docker pull {}
+
+      - name: Build 2.0.0-stretch
+        uses: docker/build-push-action@v1
+        with:
+          dockerfile: 2.0/stretch/Dockerfile
+          repository: z0beat/atlas
+          tags: 2.0.0,2.0.0-stretch,latest
+          push: false
+      
+      - name: Test 2.0.0-stretch
+        run: ./test/run-tests.sh 'z0beat/atlas:2.0.0-stretch'
+
+      - name: Publish 2.0.0-stretch
+        uses: docker/build-push-action@v1
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
+          tags: 2.0.0,2.0.0-stretch,latest
           repository: z0beat/atlas
-          # tag_with_ref: true
-          # push: ${{ startsWith(github.ref, 'refs/tags/') }}
+          push: ${{ github.ref == 'refs/heads/master'}}
