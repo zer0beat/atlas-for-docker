@@ -17,7 +17,7 @@
 
 set -e
 
-# execute files in /docker-init-scripts.d before starting solr
+# execute files in /docker-init-scripts.d before starting atlas
 while read -r f; do
     case "$f" in
         *.sh)     echo "$0: running $f"; . "$f" ;;
