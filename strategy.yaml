@@ -1,8 +1,0 @@
-fail-fast: false
-matrix:
-  include:
-    - name: 2.0.0-stretch
-      dockerfile: 2.0/stretch/Dockerfile
-      tags: 2.0.0-stretch,2.0.0,latest
-
-    

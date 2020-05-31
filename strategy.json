@@ -1,0 +1,13 @@
+{
+    "fail-fast": false,
+    "matrix": {
+        "include": [
+            {
+                "name": "2.0.0-stretch",
+                "version": "2.0.0",
+                "tags": "2.0.0-stretch,2.0.0,latest",
+                "dockerfile": "2.0/stretch/Dockerfile"
+            }
+        ]
+    }
+}

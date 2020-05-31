@@ -2,22 +2,24 @@ name: Build and Deploy to Dockerhub
 on: [push]
 
 jobs:
-  # generate-jobs:
-  #   name: Generate Jobs
-  #   runs-on: ubuntu-latest
-  #   outputs:
-  #     strategy: ${{ steps.generate-jobs.outputs.strategy }}
-  #   steps:
-  #     - uses: actions/checkout@v2
-  #     - id: generate-jobs
-  #       name: Generate Jobs
-  #       run: |
-  #         strategy="$(cat strategy.yaml)"
-  #         jq . <<<"$strategy" # sanity check / debugging aid
-  #         echo "::set-output name=strategy::$strategy"
+  generate-jobs:
+    name: Generate Jobs
+    runs-on: ubuntu-latest
+    outputs:
+      strategy: ${{ steps.generate-jobs.outputs.strategy }}
+    steps:
+      - uses: actions/checkout@v2
+      - id: generate-jobs
+        name: Generate Jobs
+        run: |
+          strategy="$(cat strategy.json | tr -d '\n')"
+          jq . <<<"$strategy" # sanity check / debugging aid
+          echo "::set-output name=strategy::$strategy"
 
   build:
-    name: 2.0.0-stretch
+    needs: generate-jobs
+    strategy: ${{ fromJson(needs.generate-jobs.outputs.strategy) }}
+    name: ${{ matrix.name }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -27,25 +29,27 @@ jobs:
         run: git clone https://github.com/docker-library/official-images.git ./official-images
 
       - name: Pull dependencies
-        run: grep FROM 2.0/stretch/Dockerfile | awk 'toupper($1) == "FROM" { print $2 }' | xargs -I {} docker pull {}
+        run: grep FROM ${{ matrix.dockerfile }} | awk 'toupper($1) == "FROM" { print $2 }' | xargs -I {} docker pull {}
 
-      - name: Build 2.0.0-stretch
+      - name: Build ${{ matrix.name }}
         uses: docker/build-push-action@v1
         with:
-          dockerfile: 2.0/stretch/Dockerfile
+          dockerfile: ${{ matrix.dockerfile }}
+          build_args: VERSION=${{ matrix.version }}
           repository: z0beat/atlas
-          tags: 2.0.0,2.0.0-stretch,latest
+          tags: ${{ matrix.tags }}
           push: false
       
-      - name: Test 2.0.0-stretch
-        run: ./test/run-tests.sh 'z0beat/atlas:2.0.0-stretch'
+      - name: Test ${{ matrix.name }}
+        run: ./test/run-tests.sh 'z0beat/atlas:${{ matrix.name }}'
 
-      - name: Publish 2.0.0-stretch
+      - name: Publish ${{ matrix.name }}
         uses: docker/build-push-action@v1
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
-          dockerfile: 2.0/stretch/Dockerfile
-          tags: 2.0.0,2.0.0-stretch,latest
+          dockerfile: ${{ matrix.dockerfile }}
+          build_args: VERSION=${{ matrix.version }}
           repository: z0beat/atlas
+          tags: ${{ matrix.tags }}
           push: ${{ github.ref == 'refs/heads/master'}}
