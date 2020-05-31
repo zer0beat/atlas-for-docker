@@ -53,3 +53,4 @@ local.properties
 # Code Recommenders
 .recommenders/
 /.apt_generated/
+official-images
