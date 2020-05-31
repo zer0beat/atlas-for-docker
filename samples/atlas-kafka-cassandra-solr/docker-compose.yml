@@ -1,7 +1,7 @@
 version: '3'
 services:
     atlas:
-      image: atlas:local
+      image: z0beat/atlas
       restart: always
       ports:
         - 21000:21000
