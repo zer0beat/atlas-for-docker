@@ -15,4 +15,7 @@ project_directory="${dir}/../../../samples/atlas-kafka-cassandra-solr"
 
 ATLAS_IMAGE=$image docker-compose --project-directory $project_directory -f $project_directory/docker-compose.yml up -d
 
+# Wait until atlas is available (with timeout)
+# Call to the API
+
 docker-compose --project-directory $project_directory -f $project_directory/docker-compose.yml down
