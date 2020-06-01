@@ -104,13 +104,29 @@ function is_elasticsearch_local {
   return 0
 }
 
+function configure_hbase {
+  printf "FILL ME"
+}
+
+function run_hbase_action {
+  printf "FILL ME"
+}
+
 if is_hbase "${ATLAS_CONF_DIR}/${ATLAS_CONF_FILE}"; then
     if [[ -f "${HBASE_CONF_DIR}/hbase-site.xml" ]]; then
         ATLAS_CLASSPATH="${ATLAS_CLASSPATH}:${HBASE_CONF_DIR}"
     else
-        echo "Could not find hbase-site.xml in ${HBASE_CONF_DIR}. Please set env var HBASE_CONF_DIR to the hbase client conf dir"
+        printf "Could not find hbase-site.xml in %s. Please set env var HBASE_CONF_DIR to the hbase client conf dir" "$HBASE_CONF_DIR"
         exit 1
     fi
+fi
+
+if is_hbase_local "${ATLAS_CONF_DIR}/${ATLAS_CONF_FILE}"; then
+  printf "configured for local hbase"
+  configure_hbase "${ATLAS_CONF_DIR}/${ATLAS_CONF_FILE}"
+  run_hbase_action
+  printf "hbase started"
+
 fi
 
 # Which jar to use
