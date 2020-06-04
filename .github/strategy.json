@@ -15,7 +15,7 @@
                 "name": "2.0.0-stretch-dev",
                 "build_args": {
                     "version": "2.0.0",
-                    "build_profile": "dist,embedded-cassandra-solr"
+                    "build_profile": "dist,embedded-hbase-solr"
                 },
                 "tags": "2.0.0-stretch-dev,2.0.0-dev",
                 "dockerfile": "stretch/Dockerfile"
