@@ -13,19 +13,22 @@ ATLAS_MAIN_CLASS="org.apache.atlas.Atlas"
 
 DEFAULT_JVM_HEAP_OPTS="-Xmx1024m"
 DEFAULT_JVM_OPTS="-Dlog4j.configuration=atlas-log4j.xml -Djava.net.preferIPv4Stack=true -server"
-DEFAULT_HBASE_CONF_DIR="${ATLAS_HOME}/conf/hbase"
+DEFAULT_SOLR_PORT="9838"
+DEFAULT_HBASE_CONF_DIR="${ATLAS_HOME}/hbase/conf"
 
 ATLAS_CONF_DIR=${ATLAS_CONF_DIR:-"${ATLAS_HOME}/conf"}
 ATLAS_CONF_FILE=${ATLAS_CONF_FILE:-"atlas-application.properties"}
 ATLAS_LOG_DIR=${ATLAS_LOG_DIR:-"${ATLAS_HOME}/logs"}
 ATLAS_LOG_FILE=${ATLAS_LOG_FILE:-"application.log"}
+ATLAS_DATA_DIR=${ATLAS_DATA_DIR:-"${ATLAS_HOME}/data"}
 ATLAS_SERVER_HEAP=${ATLAS_SERVER_HEAP:-$DEFAULT_JVM_HEAP_OPTS}
 ATLAS_OPTS=${ATLAS_OPTS:-$DEFAULT_JVM_OPTS}
-ATLAS_CLASSPATH="${ATLAS_HOME}/conf:${ATLAS_HOME}/server/webapp/atlas/WEB-INF/classes:${ATLAS_HOME}/server/webapp/atlas/WEB-INF/lib/*:${ATLAS_HOME}/libext/*"
+ATLAS_CLASSPATH="${ATLAS_CONF_DIR}:${ATLAS_HOME}/server/webapp/atlas/WEB-INF/classes:${ATLAS_HOME}/server/webapp/atlas/WEB-INF/lib/*:${ATLAS_HOME}/libext/*"
 HBASE_CONF_DIR=${HBASE_CONF_DIR:-$DEFAULT_HBASE_CONF_DIR}
-ATLAS_CONF_OPTS="-Datlas.log.dir=$ATLAS_LOG_DIR -Datlas.log.file=$ATLAS_LOG_FILE -Datlas.home=$ATLAS_HOME -Datlas.conf=${ATLAS_HOME}/conf"
+ATLAS_CONF_OPTS="-Datlas.log.dir=$ATLAS_LOG_DIR -Datlas.log.file=$ATLAS_LOG_FILE -Datlas.home=$ATLAS_HOME -Datlas.conf=${ATLAS_CONF_DIR}"
 ATLAS_EXPANDED_WEBAPP_DIR=${ATLAS_EXPANDED_WEBAPP_DIR:-"${ATLAS_HOME}/server/webapp"}
 ATLAS_APP_METADATA_DIR=${ATLAS_APP_METADATA_DIR:-"${ATLAS_EXPANDED_WEBAPP_DIR}/atlas"}
+SOLR_PORT=${SOLR_PORT:-$DEFAULT_SOLR_PORT}
 
 MANAGE_LOCAL_HBASE=$(echo "${MANAGE_LOCAL_HBASE:-"False"}" | tr '[:upper:]' '[:lower:]')
 MANAGE_EMBEDDED_CASSANDRA=$(echo "${MANAGE_EMBEDDED_CASSANDRA:-"False"}" | tr '[:upper:]' '[:lower:]')
@@ -40,8 +43,7 @@ function get_configuration_value {
 }
 
 function is_hbase {
-  local configuration_file=$1
-  get_configuration_value "storage_backend" "$configuration_file" "$STORAGE_BACKEND_CONF"
+  get_configuration_value "storage_backend" "${ATLAS_CONF_DIR}/${ATLAS_CONF_FILE}" "$STORAGE_BACKEND_CONF"
   if [[ "$STORAGE_BACKEND" == "hbase" || "$STORAGE_BACKEND" == "hbase2" || "$STORAGE_BACKEND" == "" ]]; then
     return 1
   fi
@@ -49,10 +51,9 @@ function is_hbase {
 }
 
 function is_hbase_local {
-  local configuration_file=$1
   if [[ "$MANAGE_LOCAL_HBASE" == "true" ]]; then
-    get_configuration_value "hbase_storage_local" "$configuration_file" "$HBASE_STORAGE_LOCAL_CONF_ENTRY"
-    if  is_hbase "$configuration_file" && [[ -z "$hbase_storage_local" ]]; then
+    get_configuration_value "hbase_storage_local" "${ATLAS_CONF_DIR}/${ATLAS_CONF_FILE}" "$HBASE_STORAGE_LOCAL_CONF_ENTRY"
+    if  is_hbase && [[ -z "$hbase_storage_local" ]]; then
       return 1
     fi
   fi
@@ -68,9 +69,8 @@ function is_cassandra_local {
 }
 
 function is_solr_local {
-  local configuration_file=$1
   if [[ "$MANAGE_LOCAL_SOLR" == "true" ]]; then
-    if is_solr_local_cloud_mode "$configuration_file" || is_solr_local_standalone_mode "$configuration_file"; then
+    if is_solr_local_cloud_mode || is_solr_local_standalone_mode; then
       return 1
     fi
   fi
@@ -78,7 +78,7 @@ function is_solr_local {
 }
 
 function is_solr_local_cloud_mode {
-  local configuration_file=$1
+  local configuration_file="${ATLAS_CONF_DIR}/${ATLAS_CONF_FILE}"
   get_configuration_value "solr_index_mode" "$configuration_file" "$SOLR_INDEX_CONF_ENTRY"
   get_configuration_value "solr_index_local_cloud" "$configuration_file" "$SOLR_INDEX_LOCAL_CLOUD_CONF_ENTRY"
   if [[ "$solr_index_mode" == "cloud" ]] && [[ -z "$solr_index_local_cloud" ]]; then
@@ -88,7 +88,7 @@ function is_solr_local_cloud_mode {
 }
 
 function is_solr_local_standalone_mode {
-  local configuration_file=$1
+  local configuration_file="${ATLAS_CONF_DIR}/${ATLAS_CONF_FILE}"
   get_configuration_value "solr_index_mode" "$configuration_file" "$SOLR_INDEX_CONF_ENTRY"
   get_configuration_value "solr_index_local_standalone" "$configuration_file" "$SOLR_INDEX_LOCAL_STANDALONE_CONF_ENTRY"
   if [[ "$solr_index_mode" == "http" ]] && [[ -z "$solr_index_local_standalone" ]]; then
@@ -105,14 +105,77 @@ function is_elasticsearch_local {
 }
 
 function configure_hbase {
-  printf "FILL ME"
+  if [[ "${HBASE_CONF_DIR}" == "${DEFAULT_HBASE_CONF_DIR}" ]]; then
+    hbase_conf_file="hbase-site.xml"
+    tmpl_file="${ATLAS_CONF_DIR}/hbase/${hbase_conf_file}.template"
+    conf_file="${HBASE_CONF_DIR}/${hbase_conf_file}"
+
+    if [[ -f "$tmpl_file" ]]; then
+      printf "Configuring %s to %s" "$tmpl_file" "$conf_file"
+      cp "$tmpl_file" "$conf_file"
+      sed -i "s/\${hbase_home}/${ATLAS_CONF_DIR}/g"
+      sed -i "s/\${atlas_data}/${ATLAS_DATA_DIR}/g"
+      sed -i "s/\${url_prefix}/file:\/\//g"
+      rm -f "$tmpl_file"
+    fi
+  fi
+}
+
+function configure_cassandra {
+  cassandra_conf_file="cassandra.yml"
+  tmpl_file="${ATLAS_CONF_DIR}/${cassandra_conf_file}.template"
+  conf_file="${ATLAS_CONF_DIR}/${cassandra_conf_file}"
+
+  if [[ -f "$tmpl_file" ]]; then
+    printf "Configuring %s to %s" "$tmpl_file" "$conf_file"
+    cp "$tmpl_file" "$conf_file"
+    sed -i "s/\${atlas_home}/${ATLAS_HOME}/g"
+    rm -f "$tmpl_file"
+  fi
+}
+
+function configure_zookeeper {
+  zookeeper_conf_file="zoo.cfg"
+  tmpl_file="${ATLAS_CONF_DIR}/${zookeeper_conf_file}.template"
+  conf_file="${ATLAS_CONF_DIR}/${zookeeper_conf_file}"
+
+  if [[ -f "$tmpl_file" ]]; then
+    printf "Configuring %s to %s" "$tmpl_file" "$conf_file"
+    cp "$tmpl_file" "$conf_file"
+    sed -i "s/\${atlas_home}/${ATLAS_HOME}/g"
+    rm -f "$tmpl_file"
+  fi
+}
+
+function run_zookeeper {
+  printf "Executing : %s" "${ATLAS_HOME}/zkServer.sh start ${ATLAS_CONF_DIR}/${zookeeper_conf_file}"
+  "${ATLAS_HOME}/zk/bin/zkServer.sh" start "${ATLAS_CONF_DIR}/${zookeeper_conf_file}"
 }
 
 function run_hbase_action {
-  printf "FILL ME"
+  printf "Executing : %s" "${ATLAS_HOME}/hbase/bin/hbase-daemon.sh --config ${HBASE_CONF_DIR} start master"
+  "${ATLAS_HOME}/hbase/bin/hbase-daemon.sh" --config "${HBASE_CONF_DIR}" start master
 }
 
-if is_hbase "${ATLAS_CONF_DIR}/${ATLAS_CONF_FILE}"; then
+function run_solr {
+  get_configuration_value "solr_zk_url" "${ATLAS_CONF_DIR}/${ATLAS_CONF_FILE}" "$SOLR_INDEX_ZK_URL"
+  if [[ -n "${solr_zk_url}" ]]; then
+    ZK_URL="-z ${solr_zk_url}"
+  fi
+  "${ATLAS_HOME}/solr/bin/solr" start -p "${SOLR_PORT}" "${ZK_URL}"
+}
+
+function create_solr_collection {
+  local index=$1
+  "${ATLAS_HOME}/solr/bin/solr" create -c "${index}" -d "${ATLAS_CONF_DIR}" -shards 1 -replicationFactor 1
+}
+
+function start_elasticsearch {
+  printf "Executing : %s" "${ATLAS_HOME}/elasticsearch/bin/elasticsearch -d -p ${ATLAS_HOME}/logs/elasticsearch.pid"
+  "${ATLAS_HOME}/elasticsearch/bin/elasticsearch" -d -p "${ATLAS_HOME}/logs/elasticsearch.pid"
+}
+
+if is_hbase; then
     if [[ -f "${HBASE_CONF_DIR}/hbase-site.xml" ]]; then
         ATLAS_CLASSPATH="${ATLAS_CLASSPATH}:${HBASE_CONF_DIR}"
     else
@@ -121,12 +184,37 @@ if is_hbase "${ATLAS_CONF_DIR}/${ATLAS_CONF_FILE}"; then
     fi
 fi
 
-if is_hbase_local "${ATLAS_CONF_DIR}/${ATLAS_CONF_FILE}"; then
+if is_hbase_local; then
   printf "configured for local hbase"
-  configure_hbase "${ATLAS_CONF_DIR}/${ATLAS_CONF_FILE}"
+  configure_hbase
   run_hbase_action
   printf "hbase started"
+fi
 
+if is_solr_local; then
+  printf "configured for local solr"
+
+  if is_cassandra_local; then
+    printf "Cassandra embedded configured"
+    configure_cassandra
+    configure_zookeeper
+    run_zookeeper
+    printf "zookeeper started"
+  fi
+
+  run_solr
+  printf "solr started"
+
+  printf "setting up solr collections..."
+  create_solr_collection vertex_index
+  create_solr_collection edge_index
+  create_solr_collection fulltext_index
+fi
+
+if is_elasticsearch_local; then
+  printf "configured for local elasticsearch"
+  start_elasticsearch
+  printf "elasticsearch started"
 fi
 
 # Which jar to use
