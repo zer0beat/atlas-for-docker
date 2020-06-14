@@ -7,11 +7,11 @@ ENV DIST_MIRROR     https://archive.apache.org/dist/atlas
 ENV ATLAS_BUILD     /opt/atlas-build
 ENV ATLAS_HOME      /opt/atlas
 
-RUN mkdir -p ${ATLAS_BUILD} ${ATLAS_HOME} && \
+RUN set -x && mkdir -p ${ATLAS_BUILD} ${ATLAS_HOME} && \
     wget -qO- ${DIST_MIRROR}/${VERSION}/apache-atlas-${VERSION}-sources.tar.gz | tar xvz -C ${ATLAS_BUILD} --strip-components=1 && \
     cd ${ATLAS_BUILD} && \
     sed -i "s#http://repo1.maven.org/maven2#https://repo1.maven.org/maven2#g" pom.xml && \
-    mvn -DskipTests=true package -P${BUILD_PROFILE} && \
+    mvn -DskipTests=true package -P$(echo ${BUILD_PROFILE} | sed s/\|/,/) && \
     tar zxf ${ATLAS_BUILD}/distro/target/apache-atlas-${VERSION}-server.tar.gz --strip-components 1 -C ${ATLAS_HOME}
 
 FROM debian:stretch
