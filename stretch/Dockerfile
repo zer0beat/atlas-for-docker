@@ -31,6 +31,8 @@ RUN apt-get update && \
 COPY atlas /usr/local/bin/atlas
 WORKDIR ${ATLAS_HOME}
 
+ENV JAVA_HOME="/usr/lib/jvm/java-8-openjdk-amd64"
+
 USER atlas:atlas
 EXPOSE 21000
 

@@ -113,9 +113,9 @@ function configure_hbase {
     if [[ -f "$tmpl_file" ]]; then
       printf "Configuring %s to %s" "$tmpl_file" "$conf_file"
       cp "$tmpl_file" "$conf_file"
-      sed -i "s/\${hbase_home}/${ATLAS_CONF_DIR}/g" "$conf_file"
-      sed -i "s/\${atlas_data}/${ATLAS_DATA_DIR}/g" "$conf_file"
-      sed -i "s/\${url_prefix}/file:\/\//g" "$conf_file"
+      sed -i "s \${hbase_home} ${ATLAS_CONF_DIR} g" "$conf_file"
+      sed -i "s \${atlas_data} ${ATLAS_DATA_DIR} g" "$conf_file"
+      sed -i "s \${url_prefix} file:// g" "$conf_file"
       rm -f "$tmpl_file"
     fi
   fi
@@ -129,7 +129,7 @@ function configure_cassandra {
   if [[ -f "$tmpl_file" ]]; then
     printf "Configuring %s to %s" "$tmpl_file" "$conf_file"
     cp "$tmpl_file" "$conf_file"
-    sed -i "s/\${atlas_home}/${ATLAS_HOME}/g" "$conf_file"
+    sed -i "s \${atlas_home} ${ATLAS_HOME} g" "$conf_file"
     rm -f "$tmpl_file"
   fi
 }
@@ -142,7 +142,7 @@ function configure_zookeeper {
   if [[ -f "$tmpl_file" ]]; then
     printf "Configuring %s to %s" "$tmpl_file" "$conf_file"
     cp "$tmpl_file" "$conf_file"
-    sed -i "s/\${atlas_home}/${ATLAS_HOME}/g" "$conf_file"
+    sed -i "s \${atlas_home} ${ATLAS_HOME} g" "$conf_file"
     rm -f "$tmpl_file"
   fi
 }
@@ -153,7 +153,7 @@ function run_zookeeper {
 }
 
 function run_hbase_action {
-  printf "Executing : %s" "${ATLAS_HOME}/hbase/bin/hbase-daemon.sh --config ${HBASE_CONF_DIR} start master \n"
+  printf "Executing : %s" "${ATLAS_HOME}/hbase/bin/hbase-daemon.sh --config ${HBASE_CONF_DIR} start master\n"
   "${ATLAS_HOME}/hbase/bin/hbase-daemon.sh" --config "${HBASE_CONF_DIR}" start master
 }
 
@@ -171,9 +171,13 @@ function create_solr_collection {
 }
 
 function start_elasticsearch {
-  printf "Executing : %s" "${ATLAS_HOME}/elasticsearch/bin/elasticsearch -d -p ${ATLAS_HOME}/logs/elasticsearch.pid \n"
+  printf "Executing : %s" "${ATLAS_HOME}/elasticsearch/bin/elasticsearch -d -p ${ATLAS_HOME}/logs/elasticsearch.pid\n"
   "${ATLAS_HOME}/elasticsearch/bin/elasticsearch" -d -p "${ATLAS_HOME}/logs/elasticsearch.pid"
 }
+
+if [[ "$DEBUG" == "true" ]]; then
+  set -x
+fi
 
 if is_hbase; then
     if [[ -f "${HBASE_CONF_DIR}/hbase-site.xml" ]]; then
