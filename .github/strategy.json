@@ -3,12 +3,30 @@
     "matrix": {
         "include": [
             {
+                "name": "2.1.0-stretch",
+                "build_args": {
+                    "version": "2.1.0",
+                    "build_profile": "dist"
+                },
+                "tags": "2.1.0-stretch,2.1.0,latest",
+                "dockerfile": "stretch/Dockerfile"
+            },
+            {
+                "name": "2.1.0-stretch-dev",
+                "build_args": {
+                    "version": "2.1.0",
+                    "build_profile": "dist|embedded-hbase-solr"
+                },
+                "tags": "2.1.0-stretch-dev,2.1.0-dev",
+                "dockerfile": "stretch/Dockerfile"
+            },
+            {
                 "name": "2.0.0-stretch",
                 "build_args": {
                     "version": "2.0.0",
                     "build_profile": "dist"
                 },
-                "tags": "2.0.0-stretch,2.0.0,latest",
+                "tags": "2.0.0-stretch,2.0.0",
                 "dockerfile": "stretch/Dockerfile"
             },
             {
