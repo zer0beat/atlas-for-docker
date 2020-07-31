@@ -53,7 +53,7 @@ function is_hbase {
 function is_hbase_local {
   if [[ "$MANAGE_LOCAL_HBASE" == "true" ]]; then
     get_configuration_value "hbase_storage_local" "${ATLAS_CONF_DIR}/${ATLAS_CONF_FILE}" "$HBASE_STORAGE_LOCAL_CONF_ENTRY"
-    if  is_hbase && [[ -z "$hbase_storage_local" ]]; then
+    if  is_hbase && [[ ! -z "$hbase_storage_local" ]]; then
       return 0
     fi
   fi
