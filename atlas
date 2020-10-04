@@ -79,9 +79,10 @@ function is_solr_local {
 
 function is_solr_local_cloud_mode {
   local configuration_file="${ATLAS_CONF_DIR}/${ATLAS_CONF_FILE}"
-  get_configuration_value "solr_index_mode" "$configuration_file" "$SOLR_INDEX_CONF_ENTRY"
+  get_configuration_value "solr_index" "$configuration_file" "$SOLR_INDEX_CONF_ENTRY"
+  get_configuration_value "solr_index_mode" "$configuration_file" "$SOLR_INDEX_MODE_CONF_ENTRY"
   get_configuration_value "solr_index_local_cloud" "$configuration_file" "$SOLR_INDEX_LOCAL_CLOUD_CONF_ENTRY"
-  if [[ "$solr_index_mode" == "cloud" ]] && [[ -z "$solr_index_local_cloud" ]]; then
+  if [[ -z "$solr_index" ]] && [[ "$solr_index_mode" == "cloud" ]] && [[ -z "$solr_index_local_cloud" ]]; then
     return 0
   fi
   return 1
