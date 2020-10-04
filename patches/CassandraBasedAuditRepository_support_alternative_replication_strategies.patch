@@ -1,0 +1,73 @@
+From 9caf9070476ad18500264e84e9f8d06ec5f38f4d Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Joel=20Llacer=20Mart=C3=ADnez?= <z0beat@gmail.com>
+Date: Sun, 01 Oct 2020 18:15:00 +0200
+Subject: [PATCH] Support replication strategy configuration
+
+---
+ .../audit/CassandraBasedAuditRepository.java  | 22 +++++++++++++++++--
+ 1 file changed, 20 insertions(+), 2 deletions(-)
+
+diff --git a/repository/src/main/java/org/apache/atlas/repository/audit/CassandraBasedAuditRepository.java b/repository/src/main/java/org/apache/atlas/repository/audit/CassandraBasedAuditRepository.java
+index 2bc561b0e..908e7f4e8 100644
+--- a/repository/src/main/java/org/apache/atlas/repository/audit/CassandraBasedAuditRepository.java
++++ b/repository/src/main/java/org/apache/atlas/repository/audit/CassandraBasedAuditRepository.java
+@@ -60,6 +60,8 @@ public class CassandraBasedAuditRepository extends AbstractStorageBasedAuditRepo
+   // Default cassandra port
+   private static final int DEFAULT_PORT = 9042;
+   private static final int DEFAULT_REPLICATION_FACTOR = 3;
++  private static final String DEFAULT_REPLICATION_STRATEGY = "SimpleStrategy";
++  private static final String DEFAULT_REPLICATION_OPTIONS = "'eu-west': 3";
+   // The environment variable that tells us we are running in embedded mode
+   public static final String MANAGE_EMBEDDED_CASSANDRA = "MANAGE_EMBEDDED_CASSANDRA";
+ 
+@@ -69,6 +71,8 @@ public class CassandraBasedAuditRepository extends AbstractStorageBasedAuditRepo
+   public static final String CASSANDRA_PORT_PROPERTY = "atlas.graph.storage.port";
+   public static final String CASSANDRA_REPLICATION_FACTOR_PROPERTY = "atlas.EntityAuditRepository.replicationFactor";
+   public static final String CASSANDRA_AUDIT_KEYSPACE_PROPERTY = "atlas.EntityAuditRepository.keyspace";
++  public static final String CASSANDRA_AUDIT_REPLICATION_STRATEGY_PROPERTY = "atlas.EntityAuditRepository.replicationStrategy";
++  public static final String CASSANDRA_AUDIT_REPLICATION_OPTIONS_PROPERTY = "atlas.EntityAuditRepository.replicationOptions";
+ 
+   private static final String  AUDIT_TABLE_SCHEMA =
+       "CREATE TABLE audit(entityid text, "
+@@ -94,6 +98,8 @@ public class CassandraBasedAuditRepository extends AbstractStorageBasedAuditRepo
+ 
+   private String keyspace;
+   private int replicationFactor;
++  private String replicationStrategy;
++  private String replicationOptions;
+   private Session cassSession;
+   private String clusterName;
+   private int port;
+@@ -204,6 +210,8 @@ public class CassandraBasedAuditRepository extends AbstractStorageBasedAuditRepo
+   void initializeSettings() {
+     keyspace = APPLICATION_PROPERTIES.getString(CASSANDRA_AUDIT_KEYSPACE_PROPERTY, DEFAULT_KEYSPACE);
+     replicationFactor = APPLICATION_PROPERTIES.getInt(CASSANDRA_REPLICATION_FACTOR_PROPERTY, DEFAULT_REPLICATION_FACTOR);
++    replicationStrategy = APPLICATION_PROPERTIES.getString(CASSANDRA_AUDIT_REPLICATION_STRATEGY_PROPERTY, DEFAULT_REPLICATION_STRATEGY);
++    replicationOptions = APPLICATION_PROPERTIES.getString(CASSANDRA_AUDIT_REPLICATION_OPTIONS_PROPERTY, DEFAULT_REPLICATION_OPTIONS);
+     clusterName = APPLICATION_PROPERTIES.getString(CASSANDRA_CLUSTERNAME_PROPERTY, DEFAULT_CLUSTER_NAME);
+     port = APPLICATION_PROPERTIES.getInt(CASSANDRA_PORT_PROPERTY, DEFAULT_PORT);
+   }
+@@ -221,8 +229,18 @@ public class CassandraBasedAuditRepository extends AbstractStorageBasedAuditRepo
+     try {
+       cassSession = cluster.connect();
+       if (cluster.getMetadata().getKeyspace(keyspace) == null) {
+-        String query = "CREATE KEYSPACE " + keyspace + " WITH replication "
+-            + "= {'class':'SimpleStrategy', 'replication_factor':" + replicationFactor + "}; ";
++        String query;
++        switch (replicationStrategy) {
++          default:
++          case "SimpleStrategy":
++            query = "CREATE KEYSPACE " + keyspace + " WITH replication "
++                    + "= {'class':'" + replicationStrategy + "', 'replication_factor':" + replicationFactor + "}; ";
++            break;
++          case "NetworkTopologyStrategy":
++            query = "CREATE KEYSPACE " + keyspace + " WITH replication "
++                    + "= {'class':'" + replicationStrategy + "', " + replicationOptions + "}; ";
++            break;
++        }
+         cassSession.execute(query);
+         cassSession.close();
+         cassSession = cluster.connect(keyspace);
+-- 
+2.24.0
+

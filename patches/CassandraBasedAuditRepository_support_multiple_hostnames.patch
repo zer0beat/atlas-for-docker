@@ -1,0 +1,27 @@
+From 55dfb8f5a71116439c0a859999326941d47dc03c Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Joel=20Llacer=20Mart=C3=ADnez?= <z0beat@gmail.com>
+Date: Sun, 01 Oct 2020 18:15:00 +0200
+Subject: [PATCH] Support multiple contact points
+
+---
+ .../atlas/repository/audit/CassandraBasedAuditRepository.java | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/repository/src/main/java/org/apache/atlas/repository/audit/CassandraBasedAuditRepository.java b/repository/src/main/java/org/apache/atlas/repository/audit/CassandraBasedAuditRepository.java
+index 8a453fd43..2bc561b0e 100644
+--- a/repository/src/main/java/org/apache/atlas/repository/audit/CassandraBasedAuditRepository.java
++++ b/repository/src/main/java/org/apache/atlas/repository/audit/CassandraBasedAuditRepository.java
+@@ -216,8 +216,8 @@ public class CassandraBasedAuditRepository extends AbstractStorageBasedAuditRepo
+   void createSession() throws AtlasException {
+     Cluster.Builder cassandraClusterBuilder = Cluster.builder();
+ 
+-    String hostname = APPLICATION_PROPERTIES.getString(CASSANDRA_HOSTNAME_PROPERTY, "localhost");
+-    Cluster cluster = cassandraClusterBuilder.addContactPoint(hostname).withClusterName(clusterName).withPort(port).build();
++    String[] hostnames = APPLICATION_PROPERTIES.getString(CASSANDRA_HOSTNAME_PROPERTY, "localhost").split(":");
++    Cluster cluster = cassandraClusterBuilder.addContactPoints(hostnames).withClusterName(clusterName).withPort(port).build();
+     try {
+       cassSession = cluster.connect();
+       if (cluster.getMetadata().getKeyspace(keyspace) == null) {
+-- 
+2.24.0
+
