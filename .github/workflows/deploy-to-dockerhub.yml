@@ -44,7 +44,7 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           file: ${{ matrix.dockerfile }}
-          build_args: VERSION=${{ matrix.build_args.version }},BUILD_PROFILE=${{ matrix.build_args.build_profile }}
+          build-args: VERSION=${{ matrix.build_args.version }},BUILD_PROFILE=${{ matrix.build_args.build_profile }}
           tags: ${{ matrix.tags }}
           push: false
       
@@ -56,6 +56,6 @@ jobs:
         if: ${{ github.ref == 'refs/heads/master'}}
         with:
           file: ${{ matrix.dockerfile }}
-          build_args: VERSION=${{ matrix.build_args.version }},BUILD_PROFILE=${{ matrix.build_args.build_profile }}
+          build-args: VERSION=${{ matrix.build_args.version }},BUILD_PROFILE=${{ matrix.build_args.build_profile }}
           tags: ${{ matrix.tags }}
           push: true
