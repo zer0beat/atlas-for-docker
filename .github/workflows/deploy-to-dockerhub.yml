@@ -8,18 +8,18 @@ jobs:
       matrix:
         include:
           - name: 2.1.0-stretch
-            build-args:
-              version: 2.1.0
-              build_profile: dist
+            build-args: |
+              VERSION=2.1.0
+              BUILD_PROFILE=dist
             tags: |
               z0beat/atlas:2.1.0-stretch
               z0beat/atlas:2.1.0
               z0beat/atlas:latest
             dockerfile: stretch/Dockerfile
           - name: 2.1.0-stretch-dev
-            build-args:
-              version: 2.1.0
-              build_profile: dist|embedded-hbase-solr
+            build-args: |
+              VERSION=2.1.0
+              BUILD_PROFILE=dist|embedded-hbase-solr
             tags: |
               z0beat/atlas:2.1.0-stretch-dev
               z0beat/atlas:2.1.0-dev
@@ -52,7 +52,7 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           file: ${{ matrix.dockerfile }}
-          build-args: VERSION=${{ matrix.build_args.version }},BUILD_PROFILE=${{ matrix.build_args.build_profile }}
+          build-args: ${{ matrix.build-args }}
           tags: ${{ matrix.tags }}
           push: false
       
@@ -64,6 +64,6 @@ jobs:
         if: ${{ github.ref == 'refs/heads/master'}}
         with:
           file: ${{ matrix.dockerfile }}
-          build-args: VERSION=${{ matrix.build_args.version }},BUILD_PROFILE=${{ matrix.build_args.build_profile }}
+          build-args: ${{ matrix.build_args }}
           tags: ${{ matrix.tags }}
           push: true
