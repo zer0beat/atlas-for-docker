@@ -9,15 +9,20 @@ jobs:
         include:
           - name: 2.1.0-stretch
             build-args:
-              version: 2.1.00
+              version: 2.1.0
               build_profile: dist
-            tags: z0beat/atlas:2.1.0-stretch,z0beat/atlas:2.1.0,z0beat/atlas:latest
+            tags: |
+              z0beat/atlas:2.1.0-stretch
+              z0beat/atlas:2.1.0
+              z0beat/atlas:latest
             dockerfile: stretch/Dockerfile
           - name: 2.1.0-stretch-dev
             build-args:
-              version: 2.1.00
+              version: 2.1.0
               build_profile: dist|embedded-hbase-solr
-            tags: z0beat/atlas:2.1.0-stretch-dev,z0beat/atlas:2.1.0-dev
+            tags: |
+              z0beat/atlas:2.1.0-stretch-dev
+              z0beat/atlas:2.1.0-dev
             dockerfile: stretch/Dockerfile
     name: ${{ matrix.name }}
     runs-on: ubuntu-latest
