@@ -2,23 +2,23 @@ name: Build and Deploy to Dockerhub
 on: [push]
 
 jobs:
-  generate-jobs:
-    name: Generate Jobs
-    runs-on: ubuntu-latest
-    outputs:
-      strategy: ${{ steps.generate-jobs.outputs.strategy }}
-    steps:
-      - uses: actions/checkout@v2
-      - id: generate-jobs
-        name: Generate Jobs
-        run: |
-          strategy="$(cat .github/strategy.json | tr -d '\n')"
-          jq . <<<"$strategy" # sanity check / debugging aid
-          echo "::set-output name=strategy::$strategy"
-
   build:
-    needs: generate-jobs
-    strategy: ${{ fromJson(needs.generate-jobs.outputs.strategy) }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: 2.1.0-stretch
+            build-args:
+              version: 2.1.00
+              build_profile: dist
+            tags: z0beat/atlas:2.1.0-stretch,z0beat/atlas:2.1.0,z0beat/atlas:latest
+            dockerfile: stretch/Dockerfile
+          - name: 2.1.0-stretch-dev
+            build-args:
+              version: 2.1.00
+              build_profile: dist|embedded-hbase-solr
+            tags: z0beat/atlas:2.1.0-stretch-dev,z0beat/atlas:2.1.0-dev
+            dockerfile: stretch/Dockerfile
     name: ${{ matrix.name }}
     runs-on: ubuntu-latest
     steps:
