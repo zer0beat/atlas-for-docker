@@ -76,13 +76,13 @@ jobs:
           push: true
       
       - name: Test ${{ matrix.name }}
-        run: ./test/run-tests.sh 'z0beat/atlas:test'
+        run: ./test/run-tests.sh 'localhost:5000/z0beat/atlas:test'
 
       - name: Publish ${{ matrix.name }}
         uses: docker/build-push-action@v2
         if: ${{ github.ref == 'refs/heads/master'}}
         with:
           tags: ${{ matrix.tags }}
-          cache-from: type=registry,ref=z0beat/atlas:test
+          cache-from: type=registry,ref=localhost:5000/z0beat/atlas:test
           cache-to: type=inline
           push: true
