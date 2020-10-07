@@ -31,6 +31,11 @@ jobs:
             dockerfile: stretch/Dockerfile
     name: ${{ matrix.name }}
     runs-on: ubuntu-latest
+    services:
+      registry:
+        image: registry:2
+        ports:
+          - 5000:5000
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -65,17 +70,17 @@ jobs:
         with:
           file: ${{ matrix.dockerfile }}
           build-args: ${{ matrix.build-args }}
-          tags: ${{ matrix.tags }}
-          push: false
+          tags: localhost:5000/z0beat/atlas:test
+          push: true
       
       - name: Test ${{ matrix.name }}
-        run: ./test/run-tests.sh 'z0beat/atlas:${{ matrix.name }}'
+        run: ./test/run-tests.sh 'z0beat/atlas:test'
 
       - name: Publish ${{ matrix.name }}
         uses: docker/build-push-action@v2
         if: ${{ github.ref == 'refs/heads/master'}}
         with:
-          file: ${{ matrix.dockerfile }}
-          build-args: ${{ matrix.build_args }}
           tags: ${{ matrix.tags }}
+          cache-from: type=registry,ref=z0beat/atlas:test
+          cache-to: type=inline
           push: true
