@@ -31,11 +31,6 @@ jobs:
             dockerfile: stretch/Dockerfile
     name: ${{ matrix.name }}
     runs-on: ubuntu-latest
-    services:
-      registry:
-        image: registry:2
-        ports:
-          - 5000:5000
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -45,8 +40,14 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
+
+      - name: Cache Docker layers
+        uses: actions/cache@v2
         with:
-          driver-opts: network=host
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
 
       - name: Login to DockerHub
         uses: docker/login-action@v1
@@ -72,17 +73,21 @@ jobs:
         with:
           file: ${{ matrix.dockerfile }}
           build-args: ${{ matrix.build-args }}
-          tags: localhost:5000/z0beat/atlas:test
-          push: true
+          tags: z0beat/atlas:test
+          push: false
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache
       
       - name: Test ${{ matrix.name }}
-        run: ./test/run-tests.sh 'localhost:5000/z0beat/atlas:test'
+        run: ./test/run-tests.sh 'z0beat/atlas:test'
 
       - name: Publish ${{ matrix.name }}
         uses: docker/build-push-action@v2
         if: ${{ github.ref == 'refs/heads/master'}}
         with:
+          file: ${{ matrix.dockerfile }}
+          build-args: ${{ matrix.build-args }}
           tags: ${{ matrix.tags }}
-          cache-from: type=registry,ref=localhost:5000/z0beat/atlas:test
-          cache-to: type=inline
           push: true
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache
