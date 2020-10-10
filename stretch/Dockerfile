@@ -16,6 +16,8 @@ RUN mkdir -p ${ATLAS_BUILD} ${ATLAS_HOME} && \
 
 FROM debian:stretch
 
+LABEL org.opencontainers.image.source https://github.com/zer0beat/atlas-for-docker
+
 ENV ATLAS_HOME      /opt/atlas
 
 COPY --from=builder ${ATLAS_HOME} ${ATLAS_HOME}
