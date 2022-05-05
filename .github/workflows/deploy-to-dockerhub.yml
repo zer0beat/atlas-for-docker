@@ -70,7 +70,7 @@ jobs:
           password: ${{ secrets.CR_PAT }}
 
       - name: Build ${{ matrix.name }}
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v3
         with:
           file: ${{ matrix.dockerfile }}
           build-args: ${{ matrix.build-args }}
@@ -87,7 +87,7 @@ jobs:
           ./test/run-tests.sh 'z0beat/atlas:test'
 
       - name: Publish ${{ matrix.name }}
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v3
         if: ${{ github.ref == 'refs/heads/master'}}
         with:
           file: ${{ matrix.dockerfile }}
